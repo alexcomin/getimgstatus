@@ -1,7 +1,9 @@
 import os
 import re
 from time import sleep
+from datetime import datetime
 
+time_start = datetime.strftime(datetime.now(), "%d/%m/%y %H:%M:%S");
 url = input('Вставьте адрес карты сайта .xml \n')
 url = url.split('.')
 
@@ -13,8 +15,9 @@ else:
 host = "/".join(url.split('/')[:-1])
 get_xml = os.popen('curl '+url).read()
 array_xml = get_xml.split('\n')
-url_xml = {}
-url_img_bad = {}
+url_xml = []
+url_img_bad = []
+url_img = {}
 counter = 0
 
 for i in array_xml:
@@ -22,7 +25,7 @@ for i in array_xml:
     a = list(filter(bool, map(str.rstrip, i)))
     if re.match('<loc>', a[0]):
         result_url = a[0].replace('<loc>','').replace('</loc>','')
-        url_xml[result_url] = []
+        url_xml.append(result_url)
 
 
 def test(arg):
@@ -37,30 +40,36 @@ def test(arg):
                     image_format = new_string.split('.')
                     if image_format[len(image_format) -1] in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
                         if not re.match('http', new_string):
-                            url_xml[arg].append(host+new_string)
+                            if host+new_string not in url_img:
+                                url_img[host+new_string] = [arg]
+                            else:
+                                url_img[host+new_string].append(arg)
                         else:
-                            url_xml[arg].append(new_string)
+                            if new_string not in url_img:
+                                url_img[new_string] = [arg]
+                            else:
+                                url_img[new_string].append(arg)
+                                
     
 for i in url_xml:
-    sleep(0.5)
+    sleep(0.2)
     test(i)
     counter += 1
     print("Страниц просканировано", counter, "из", len(url_xml))
+    
+print('\nПодождите, идет проверка всех найденых изображений. Это может занять некоторое время')
 
-print('Подождите, идет проверка всех найденых изображений. Это может занять некоторое время')
-	
-for page in url_xml:
-    for index in range(len(url_xml[page])):
-        response = os.popen('curl -Is '+url_xml[page][index]+' | head -1').read().split(' ')[1]
-        if response != '200':
-            if page not in url_img_bad:
-                url_img_bad.update({page: [url_xml[page][index]+ " " + response]})
-            else:
-                 url_img_bad[page].append(url_xml[page][index]+ " " + response)
-        else:
-            continue
+for img in url_img:
+    response = os.popen('curl -Is \''+img+'\' | head -1').read().split(' ')
+    if len(response) < 2:
+        print('Что то не так с изображением, проверьте страницы', img, url_img[img])
+        continue
+    else: 
+        if response[1] != '200':
+            print(img, response[1])
+            for page in url_img[img]:
+                if page not in url_img_bad:
+                    url_img_bad.append(page)
 
-for page in url_img_bad:
-    print('Страница сайта', page)
-    for img in url_img_bad[page]:
-        print('Изображение', img)
+time_now = datetime.strftime(datetime.now(), "%d/%m/%y %H:%M:%S");
+print('\nСтраницы\n'+'\n'.join(url_img_bad), "\n"+time_start+"\n"+time_now)
