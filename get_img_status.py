@@ -17,11 +17,11 @@ url_img = []
 url_xml = {}
 
 for i in array_xml:
-	i = i.split(" ")
-	a = list(filter(bool, map(str.rstrip, i)))
-	if re.match('<loc>', a[0]):
-		result_url = a[0].replace('<loc>','').replace('</loc>','')
-		url_xml[result_url] = []
+    i = i.split(" ")
+    a = list(filter(bool, map(str.rstrip, i)))
+    if re.match('<loc>', a[0]):
+        result_url = a[0].replace('<loc>','').replace('</loc>','')
+        url_xml[result_url] = []
 
 
 def test(arg):
