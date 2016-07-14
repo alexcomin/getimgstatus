@@ -65,7 +65,7 @@ for img in url_img:
         print('Что то не так с изображением, проверьте страницы', img, url_img[img])
         continue
     else: 
-        if response[1] != '200':
+        if response[1] != '200' and response[1] != '301':
             print(img, response[1])
             for page in url_img[img]:
                 if page not in url_img_bad:
